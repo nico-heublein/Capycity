@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -127,9 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Buildings.cpp" />
+    <ClCompile Include="Materials.cpp" />
     <ClCompile Include="Simulationstool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Buildings.h" />
+    <ClInclude Include="Materials.h" />
     <ClInclude Include="Simulationstool.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
