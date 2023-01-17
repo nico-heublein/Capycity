@@ -1,15 +1,17 @@
 #include <iostream>
+#include <vector>
+#include "Buildings.h"
 using namespace std;
 
-	//Enum mit den Gebaeuden
-	enum Building { Empty, Solar, Water, Wind };
-
-	//Speciherung des Bauplans
+class CapycitySim {
+public:
+	//Speicherung des Bauplans
 	Building** blueprint;
 
 	//Groesse des Bauplans
 	int rows;
 	int columns;
+
 	//Variable für Endlosschleife (siehe main)
 	bool run = true;
 
@@ -23,21 +25,26 @@ using namespace std;
 		cout << "Bitte geben Sie die Breite des Bereichs an." << endl;
 		cin >> input;
 		columns = input;
+
+		if (rows <= 0 || columns <= 0) {
+			cout << "Fehler: Diese Eingabe ist ungueltig. Bitte versuchen Sie es erneut." << endl;
+			prepareSpace();
+			return;
+		}
+
 		cout << "Baubereich wird vorbereitet..." << endl;
 
 		blueprint = new Building * [columns];
 		for (int i = 0; i < columns; i++) {
-			blueprint[i] = new Building[rows];
-			for (int j = 0; j < rows; j++) {
-				blueprint[i][j] = Empty;
-			}
+			blueprint[i] = new Empty[rows];
 		}
 	}
 
 	//Pruefen, ob Gebaeude gesetzt werden kann und nicht durch andere Gebaeude blockiert wird
 	bool isValidSet(int length, int width, int xCoord, int yCoord) {
 		bool valid = true;
-
+		if (length < 0 || width < 0 || xCoord < 0 || yCoord < 0)
+			return false;
 		if (xCoord + length > rows)
 			return false;
 		if (yCoord + width > columns)
@@ -45,7 +52,7 @@ using namespace std;
 
 		for (int i = yCoord; i < yCoord + width; i++) {
 			for (int j = xCoord; j < xCoord + length; j++) {
-				if (blueprint[i][j] != Empty)
+				if (blueprint[i][j].getName().compare("Empty") != 0)
 					valid = false;
 			}
 		}
@@ -54,6 +61,8 @@ using namespace std;
 
 	//Pruefen, ob Lösch-Bereich innerhalb des Bauplans ist
 	bool isValidDel(int length, int width, int xCoord, int yCoord) {
+		if (length < 0 || width < 0 || xCoord < 0 || yCoord < 0)
+			return false;
 		if (xCoord + length > rows)
 			return false;
 		if (yCoord + width > columns)
@@ -83,6 +92,7 @@ using namespace std;
 		cout << "Solarkraftwerk[0]	Wasserkraftwerk[1]	Windkraftwerk[2]" << endl;
 		cin >> buildingInput;
 
+		//Pruefen auf Fehler
 		if (!isValidSet(length, width, xCoord, yCoord)) {
 			cout << "Dieser Bereich ist ungueltig!" << endl;
 			return;
@@ -92,21 +102,23 @@ using namespace std;
 			return;
 		}
 
+		//Auswahl der Art
 		switch (buildingInput) {
 		case 0:
-			buildingType = Solar;
+			buildingType = SolarGenerator();
 			break;
 		case 1:
-			buildingType = Water;
+			buildingType = AquaGenerator();
 			break;
 		case 2:
-			buildingType = Wind;
+			buildingType = WindGenerator();
 			break;
 		default:
-			buildingType = Empty;
+			return;
 			break;
 		}
 
+		//Platzieren des Gebaeudes
 		for (int i = xCoord; i < xCoord + length; i++) {
 			for (int j = yCoord; j < yCoord + width; j++) {
 				blueprint[j][i] = buildingType;
@@ -131,46 +143,74 @@ using namespace std;
 		cout << "Bitte geben Sie die Y-Koordinate der linken oberen Ecke an." << endl;
 		cin >> yCoord;
 
+		//Pruefen auf Validitaet
 		if (!isValidDel(length, width, xCoord, yCoord)) {
 			cout << "Dieser Bereich ist ungueltig!" << endl;
 			return;
 		}
 
+		//Loeschen
 		for (int i = xCoord; i < xCoord + length; i++) {
 			for (int j = yCoord; j < yCoord + width; j++) {
-				blueprint[j][i] = Empty;
+				blueprint[j][i].~Building();
+				blueprint[j][i] = Empty();
 			}
 		}
 		cout << "Gebaeude wurde erfolgreich geloescht!" << endl;
 	}
 
+	//Berechne Preis eines gegebenen Gebaeuedes
+	int buildingPrice(Building b) {
+		int result = b.getDefaultPrice();
+		for (auto m : b.getMaterials()){
+			result += m.getPrice();
+		}
+		
+		return result;
+	}
+
+	//Berechne Preis des gesamten Bauplans
+	int totalPrice() {
+		int result = 0;
+
+		for (int i = 0; i < columns; i++) {
+			for (int j = 0; j < rows; j++) {
+				result += buildingPrice(blueprint[i][j]);
+			}
+		}
+		return result;
+	}
+
 	//Ausgabe des aktuellen Bauplans
 	void printBlueprint() {
 		cout << "--------------------------------------------------------------" << endl;
+		//Ausgabe der Labels
 		for (int i = 0; i < columns; i++) {
 			for (int j = 0; j < rows; j++) {
-				switch (blueprint[i][j]) {
-				case Empty:
-					cout << "X";
-					break;
-				case Solar:
-					cout << "S";
-					break;
-				case Water:
-					cout << "A";
-					break;
-				case Wind:
-					cout << "W";
-					run = false;
-					break;
-				default:
-					break;
-				}
+				cout << blueprint[i][j].getLabel();
 			}
 			cout << "\n";
 		}
 		cout << "--------------------------------------------------------------" << endl;
-		cout << "X = Leer	S = Solarkraftwerk	A=Wasserkraftwerk	W=Windkraftwerk" << endl;
+		cout << "LEGENDE" << endl;
+		cout << "--------------------------------------------------------------" << endl;
+		vector<Building> buildingTypes = {SolarGenerator(), AquaGenerator(), WindGenerator()};
+
+		//Ausgabe von Label, Name, Preis jedes Gebaeudes
+		for (auto b : buildingTypes) {
+			cout << "[" << b.getLabel() << "] " << b.getName() << endl;
+			cout << "Materialien:	[ ";
+			for (auto m : b.getMaterials()) {
+				cout << m.getName() << " ";
+			}
+			cout << "]" << endl;
+			cout << "Preis:		" << buildingPrice(b) << "$" << endl;
+			cout << "--------------------------------------------------------------" << endl;
+		}
+		//Ausgabe des Gesamtpreis
+		cout << "Gesamtpreis:	" << totalPrice() << "$" << endl;
+
+		buildingTypes.clear();
 	}
 
 	//Begruessung und Aufruf zur Bauplan-Erstellung
@@ -197,6 +237,7 @@ using namespace std;
 
 		cin >> input;
 
+		//Auswahl der Funktionalitaet
 		switch (input) {
 		case 1:
 			setBuilding();
@@ -215,12 +256,11 @@ using namespace std;
 			break;
 		}
 	}
-
+};
 	//Main-Methode mit Endlosschleife bis Programm beendet wird
 	int main() {
-		startUp();
-		while (run)
-		{
-			mainMenu();
-		}
+		CapycitySim sim;
+		sim.startUp();
+		while (sim.run)
+			sim.mainMenu();
 	}
