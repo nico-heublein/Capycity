@@ -162,10 +162,10 @@ public:
 	//Berechne Preis eines gegebenen Gebaeuedes
 	int buildingPrice(Building b) {
 		int result = b.getDefaultPrice();
-		for (auto m : b.getMaterials()){
-			result += m.getPrice();
-		}
 		
+		for (auto m : b.getMaterials()){
+			result += m.second * (m.first->getPrice());
+		}
 		return result;
 	}
 
@@ -199,11 +199,12 @@ public:
 		//Ausgabe von Label, Name, Preis jedes Gebaeudes
 		for (auto b : buildingTypes) {
 			cout << "[" << b.getLabel() << "] " << b.getName() << endl;
-			cout << "Materialien:	[ ";
+			cout << "Materialien:" << endl;
+			
 			for (auto m : b.getMaterials()) {
-				cout << m.getName() << " ";
+				cout << m.second << "x " << m.first->getName() << endl;
 			}
-			cout << "]" << endl;
+		
 			cout << "Preis:		" << buildingPrice(b) << "$" << endl;
 			cout << "--------------------------------------------------------------" << endl;
 		}
@@ -218,7 +219,7 @@ public:
 		cout << "--------------------------------------------------------------" << endl;
 		cout << "CapyCity" << endl;
 		cout << "--------------------------------------------------------------" << endl;
-		cout << "Bitte erstellen sie zunaechst Ihren Baubereich." << endl;
+		cout << "Bitte erstellen Sie zunaechst Ihren Baubereich." << endl;
 		prepareSpace();
 
 	}

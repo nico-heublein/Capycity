@@ -4,12 +4,12 @@
 using namespace std;
 
 class Material {
-	public:
+protected:
 	string name;
 	int price;
 
+public:
 	~Material();
-
 	string getName();
 	int getPrice();
 };

@@ -2,24 +2,27 @@
 
 #include "Materials.h"
 #include <string>
-#include <vector>
+#include <map>
 
 using namespace std;
 
 class Building
 {
-public:
+protected:
 	string name;
 	string label;
 	int price;
-	vector<Material> materials;
 
+	//Ich habe mich entschlossen Carlas Idee umzusetzen, da ich die Map in der Building-Klasse persönlich übersichtlicher und leichter zu verstehen finde.
+	//Die Auslagerung der Materialien in eine gekapselte Klasse finde ich eher unübersichtlich und unpraktisch.
+	map<Material*, int> materials;
+
+public:
 	~Building();
-
 	string getName();
 	string getLabel();
 	int getDefaultPrice();
-	vector<Material> getMaterials();
+	map<Material*, int> getMaterials();
 };
 
 class SolarGenerator : public Building {
