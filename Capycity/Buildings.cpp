@@ -4,6 +4,12 @@
 
 using namespace std;
 
+Building::~Building() {
+	name.clear();
+	label.clear();
+	materials.clear();
+}
+
 SolarGenerator::SolarGenerator() {
 	name = "Solarkraftwerk";
 	label = "S";

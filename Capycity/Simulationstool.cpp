@@ -5,7 +5,7 @@ using namespace std;
 
 class CapycitySim {
 public:
-	//Speciherung des Bauplans
+	//Speicherung des Bauplans
 	Building** blueprint;
 
 	//Groesse des Bauplans
@@ -25,6 +25,13 @@ public:
 		cout << "Bitte geben Sie die Breite des Bereichs an." << endl;
 		cin >> input;
 		columns = input;
+
+		if (rows <= 0 || columns <= 0) {
+			cout << "Fehler: Diese Eingabe ist ungueltig. Bitte versuchen Sie es erneut." << endl;
+			prepareSpace();
+			return;
+		}
+
 		cout << "Baubereich wird vorbereitet..." << endl;
 
 		blueprint = new Building * [columns];
@@ -36,7 +43,8 @@ public:
 	//Pruefen, ob Gebaeude gesetzt werden kann und nicht durch andere Gebaeude blockiert wird
 	bool isValidSet(int length, int width, int xCoord, int yCoord) {
 		bool valid = true;
-
+		if (length < 0 || width < 0 || xCoord < 0 || yCoord < 0)
+			return false;
 		if (xCoord + length > rows)
 			return false;
 		if (yCoord + width > columns)
@@ -53,6 +61,8 @@ public:
 
 	//Pruefen, ob Lösch-Bereich innerhalb des Bauplans ist
 	bool isValidDel(int length, int width, int xCoord, int yCoord) {
+		if (length < 0 || width < 0 || xCoord < 0 || yCoord < 0)
+			return false;
 		if (xCoord + length > rows)
 			return false;
 		if (yCoord + width > columns)
@@ -82,6 +92,7 @@ public:
 		cout << "Solarkraftwerk[0]	Wasserkraftwerk[1]	Windkraftwerk[2]" << endl;
 		cin >> buildingInput;
 
+		//Pruefen auf Fehler
 		if (!isValidSet(length, width, xCoord, yCoord)) {
 			cout << "Dieser Bereich ist ungueltig!" << endl;
 			return;
@@ -91,6 +102,7 @@ public:
 			return;
 		}
 
+		//Auswahl der Art
 		switch (buildingInput) {
 		case 0:
 			buildingType = SolarGenerator();
@@ -106,6 +118,7 @@ public:
 			break;
 		}
 
+		//Platzieren des Gebaeudes
 		for (int i = xCoord; i < xCoord + length; i++) {
 			for (int j = yCoord; j < yCoord + width; j++) {
 				blueprint[j][i] = buildingType;
@@ -130,13 +143,16 @@ public:
 		cout << "Bitte geben Sie die Y-Koordinate der linken oberen Ecke an." << endl;
 		cin >> yCoord;
 
+		//Pruefen auf Validitaet
 		if (!isValidDel(length, width, xCoord, yCoord)) {
 			cout << "Dieser Bereich ist ungueltig!" << endl;
 			return;
 		}
 
+		//Loeschen
 		for (int i = xCoord; i < xCoord + length; i++) {
 			for (int j = yCoord; j < yCoord + width; j++) {
+				blueprint[j][i].~Building();
 				blueprint[j][i] = Empty();
 			}
 		}
@@ -168,6 +184,7 @@ public:
 	//Ausgabe des aktuellen Bauplans
 	void printBlueprint() {
 		cout << "--------------------------------------------------------------" << endl;
+		//Ausgabe der Labels
 		for (int i = 0; i < columns; i++) {
 			for (int j = 0; j < rows; j++) {
 				cout << blueprint[i][j].getLabel();
@@ -178,6 +195,8 @@ public:
 		cout << "LEGENDE" << endl;
 		cout << "--------------------------------------------------------------" << endl;
 		vector<Building> buildingTypes = {SolarGenerator(), AquaGenerator(), WindGenerator()};
+
+		//Ausgabe von Label, Name, Preis jedes Gebaeudes
 		for (auto b : buildingTypes) {
 			cout << "[" << b.getLabel() << "] " << b.getName() << endl;
 			cout << "Materialien:	[ ";
@@ -188,7 +207,10 @@ public:
 			cout << "Preis:		" << buildingPrice(b) << "$" << endl;
 			cout << "--------------------------------------------------------------" << endl;
 		}
+		//Ausgabe des Gesamtpreis
 		cout << "Gesamtpreis:	" << totalPrice() << "$" << endl;
+
+		buildingTypes.clear();
 	}
 
 	//Begruessung und Aufruf zur Bauplan-Erstellung
@@ -215,6 +237,7 @@ public:
 
 		cin >> input;
 
+		//Auswahl der Funktionalitaet
 		switch (input) {
 		case 1:
 			setBuilding();
@@ -239,7 +262,5 @@ public:
 		CapycitySim sim;
 		sim.startUp();
 		while (sim.run)
-		{
 			sim.mainMenu();
-		}
 	}

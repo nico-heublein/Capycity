@@ -2,6 +2,10 @@
 
 using namespace std;
 
+Material::~Material() {
+	name.clear();
+}
+
 Wood::Wood() {
 	name = "Holz";
 	price = 20;

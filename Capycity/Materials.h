@@ -8,6 +8,8 @@ class Material {
 	string name;
 	int price;
 
+	~Material();
+
 	string getName();
 	int getPrice();
 };

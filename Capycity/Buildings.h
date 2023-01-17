@@ -14,6 +14,8 @@ public:
 	int price;
 	vector<Material> materials;
 
+	~Building();
+
 	string getName();
 	string getLabel();
 	int getDefaultPrice();
