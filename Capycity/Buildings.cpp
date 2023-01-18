@@ -15,21 +15,21 @@ SolarGenerator::SolarGenerator() {
 	label = "S";
 	price = 100;
 
-	materials = {Plastic(), Metal(), Metal()};
+	materials = {{new Plastic, 1}, {new Metal, 2}};
 }
 AquaGenerator::AquaGenerator() {
 	name = "Wasserkraftwerk";
 	label = "A";
 	price = 200;
 
-	materials = {Plastic(), Metal(), Wood(), Wood()};
+	materials = { {new Plastic, 1}, {new Metal, 1}, {new Wood, 2}};
 }
 WindGenerator::WindGenerator() {
 	name = "Windturbine";
 	label = "W";
 	price = 50;
 
-	materials = { Plastic(), Metal(), Wood() };
+	materials = { {new Plastic, 1}, {new Metal, 1}, {new Wood, 1} };
 }
 
 Empty::Empty() {
@@ -53,6 +53,6 @@ string Building::getName() {
 	return name;
 }
 
-vector<Material> Building::getMaterials() {
+map<Material*, int> Building::getMaterials() {
 	return materials;
 }
