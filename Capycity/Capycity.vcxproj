@@ -127,11 +127,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Blueprint.cpp" />
     <ClCompile Include="Buildings.cpp" />
     <ClCompile Include="Materials.cpp" />
     <ClCompile Include="Simulationstool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Blueprint.h" />
     <ClInclude Include="Buildings.h" />
     <ClInclude Include="Materials.h" />
     <ClInclude Include="Simulationstool.h" />

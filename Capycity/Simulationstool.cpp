@@ -1,23 +1,24 @@
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include "Buildings.h"
-using namespace std;
+#include "Blueprint.h"
 
 class CapycitySim {
 public:
-	//Speicherung des Bauplans
-	Building** blueprint;
-
-	//Groesse des Bauplans
-	int rows;
-	int columns;
-
 	//Variable für Endlosschleife (siehe main)
 	bool run = true;
+	//Aktuell zu bearbeitender Plan
+	Blueprint* currentBlueprint;
+	//Vektor mit allen fertigen, abgespeicherten Plänen
+	vector<Blueprint> savedBlueprints;
+
 
 	//Initialisieren des Baubereichs
 	void prepareSpace() {
 		int input;
+		int rows;
+		int columns;
 
 		cout << "Bitte geben Sie die Laenge des Bereichs an." << endl;
 		cin >> input;
@@ -34,10 +35,7 @@ public:
 
 		cout << "Baubereich wird vorbereitet..." << endl;
 
-		blueprint = new Building * [columns];
-		for (int i = 0; i < columns; i++) {
-			blueprint[i] = new Empty[rows];
-		}
+		currentBlueprint = new Blueprint(rows, columns);
 	}
 
 	//Pruefen, ob Gebaeude gesetzt werden kann und nicht durch andere Gebaeude blockiert wird
@@ -45,14 +43,14 @@ public:
 		bool valid = true;
 		if (length < 0 || width < 0 || xCoord < 0 || yCoord < 0)
 			return false;
-		if (xCoord + length > rows)
+		if (xCoord + length > currentBlueprint->getRows())
 			return false;
-		if (yCoord + width > columns)
+		if (yCoord + width > currentBlueprint->getColumns())
 			return false;
 
 		for (int i = yCoord; i < yCoord + width; i++) {
 			for (int j = xCoord; j < xCoord + length; j++) {
-				if (blueprint[i][j].getName().compare("Empty") != 0)
+				if (currentBlueprint->getContent()[i][j] != nullptr)
 					valid = false;
 			}
 		}
@@ -63,22 +61,22 @@ public:
 	bool isValidDel(int length, int width, int xCoord, int yCoord) {
 		if (length < 0 || width < 0 || xCoord < 0 || yCoord < 0)
 			return false;
-		if (xCoord + length > rows)
+		if (xCoord + length > currentBlueprint->getRows())
 			return false;
-		if (yCoord + width > columns)
+		if (yCoord + width > currentBlueprint->getColumns())
 			return false;
 
 		return true;
 	}
 
-	//Erstellen eines Gebaeudes
+	//Erstellen eines Gebaeudes (Koordinaten beginnen bei 0)
 	void setBuilding() {
 		int length;
 		int width;
 		int xCoord;
 		int yCoord;
 		int buildingInput;
-		Building buildingType;
+		Building* building;
 
 		cout << "Bitte geben Sie die Laenge des Gebaeudes an." << endl;
 		cin >> length;
@@ -105,13 +103,13 @@ public:
 		//Auswahl der Art
 		switch (buildingInput) {
 		case 0:
-			buildingType = SolarGenerator();
+			building = new SolarGenerator();
 			break;
 		case 1:
-			buildingType = AquaGenerator();
+			building = new AquaGenerator();
 			break;
 		case 2:
-			buildingType = WindGenerator();
+			building = new WindGenerator();
 			break;
 		default:
 			return;
@@ -121,13 +119,13 @@ public:
 		//Platzieren des Gebaeudes
 		for (int i = xCoord; i < xCoord + length; i++) {
 			for (int j = yCoord; j < yCoord + width; j++) {
-				blueprint[j][i] = buildingType;
+				currentBlueprint->getContent()[j][i] = building;
 			}
 		}
 		cout << "Gebaeude wurde erfolgreich platziert!" << endl;
 	}
 
-	//Loeschen eines Gebaeudes
+	//Loeschen eines Bereichs (Koordinaten starten bei 0)
 	void delBuilding() {
 		int length;
 		int width;
@@ -143,113 +141,179 @@ public:
 		cout << "Bitte geben Sie die Y-Koordinate der linken oberen Ecke an." << endl;
 		cin >> yCoord;
 
-		//Pruefen auf Validitaet
+		//Pruefen auf Validitaet des Bereichs
 		if (!isValidDel(length, width, xCoord, yCoord)) {
 			cout << "Dieser Bereich ist ungueltig!" << endl;
 			return;
 		}
 
-		//Loeschen
+		//Loeschen der entsprechenden Felder
 		for (int i = xCoord; i < xCoord + length; i++) {
 			for (int j = yCoord; j < yCoord + width; j++) {
-				blueprint[j][i].~Building();
-				blueprint[j][i] = Empty();
+				//Löschen des Gebäude-Objekts, falls letzter Verweis gelöscht wird
+				if (currentBlueprint->getBuildings()[currentBlueprint->getContent()[j][i]] == 1)
+					delete currentBlueprint->getContent()[j][i];
+				//Reset des Pointers
+				currentBlueprint->getContent()[j][i] = nullptr;
 			}
 		}
-		cout << "Gebaeude wurde erfolgreich geloescht!" << endl;
+		cout << "Bereich wurde erfolgreich geloescht!" << endl;
 	}
 
-	//Berechne Preis eines gegebenen Gebaeuedes
-	int buildingPrice(Building b) {
-		int result = b.getDefaultPrice();
-		
-		for (auto m : b.getMaterials()){
-			result += m.second * (m.first->getPrice());
-		}
-		return result;
-	}
-
-	//Berechne Preis des gesamten Bauplans
-	int totalPrice() {
-		int result = 0;
-
-		for (int i = 0; i < columns; i++) {
-			for (int j = 0; j < rows; j++) {
-				result += buildingPrice(blueprint[i][j]);
-			}
-		}
-		return result;
-	}
-
-	//Ausgabe des aktuellen Bauplans
-	void printBlueprint() {
-		cout << "--------------------------------------------------------------" << endl;
-		//Ausgabe der Labels
-		for (int i = 0; i < columns; i++) {
-			for (int j = 0; j < rows; j++) {
-				cout << blueprint[i][j].getLabel();
-			}
-			cout << "\n";
-		}
-		cout << "--------------------------------------------------------------" << endl;
+	//Ausgabe der Gebäude-Infos (Hilfsmethode für das Drucken der Pläne)
+	void printBuildingInfo() {
+		cout << "---------------------------------------------------------------------------------------" << endl;
 		cout << "LEGENDE" << endl;
-		cout << "--------------------------------------------------------------" << endl;
-		vector<Building> buildingTypes = {SolarGenerator(), AquaGenerator(), WindGenerator()};
+		cout << "---------------------------------------------------------------------------------------" << endl;
+		vector<Building> buildingTypes = { SolarGenerator(), AquaGenerator(), WindGenerator() };
 
-		//Ausgabe von Label, Name, Preis jedes Gebaeudes
+		//Ausgabe von Label, Name, Preis jedes Gebaeudetyps (pro Feld)
 		for (auto b : buildingTypes) {
 			cout << "[" << b.getLabel() << "] " << b.getName() << endl;
 			cout << "Materialien:" << endl;
-			
+
 			for (auto m : b.getMaterials()) {
 				cout << m.second << "x " << m.first->getName() << endl;
 			}
-		
-			cout << "Preis:		" << buildingPrice(b) << "$" << endl;
-			cout << "--------------------------------------------------------------" << endl;
-		}
-		//Ausgabe des Gesamtpreis
-		cout << "Gesamtpreis:	" << totalPrice() << "$" << endl;
+			cout << "Grundpreis:	" << b.getTotalPrice(0) << "$" << endl;
+			cout << "Gesamtpreis:	" << b.getTotalPrice(1) << "$" << endl;
+			cout << "Leistung:	" << b.getPower() << "MW" << endl;
 
+			cout << endl;
+		}
+		cout << "---------------------------------------------------------------------------------------" << endl;
 		buildingTypes.clear();
+	}
+
+	//Ausgabe eines Bauplans
+	void printBlueprint(Blueprint* plan) {
+
+		//Ausgabe eines Bauplans mir Kennzahl K
+		cout << endl;
+		cout << "Bauplan	[K: " << plan->calculateRatio() << "]" << endl;
+		cout << endl;
+
+		//Ausgabe der Gebäude-Labels
+		for (int i = 0; i < plan->getColumns(); i++) {
+			for (int j = 0; j < plan->getRows(); j++) {
+				if (plan->getContent()[i][j] != nullptr) {
+					cout << plan->getContent()[i][j]->getLabel() << " ";
+				} else {
+					cout << "X ";
+				}
+				
+			}
+			cout << "\n";
+		}
+		//Ausgabe aller Gebäude
+		printBuildings(plan);
+		//Ausgabe des Gesamtpreis
+		cout << "Gesamtpreis:		" << plan->calculatePrice() << "$" << endl;
+		cout << "Energieproduktion:	" << plan->calculatePower() << "MW" << endl;
+	}
+
+	//Ausgabe aller Gebäude eines Planes
+	void printBuildings(Blueprint* plan) {
+		cout << endl;
+		cout << "Gebaeude:" << endl;
+
+		for (auto b : plan->getBuildings()) {
+			cout << "[" << b.first->getLabel() << "] " << b.first->getName() << ":	Matererialien[ ";
+			for (auto m : b.first->getMaterials())
+				cout << b.second * m.second << "x" << m.first->getName() << " ";
+			cout << "]	Preis: " << b.first->getTotalPrice(b.second) << "$" << "	Leistung: " << b.first->getPower() << "MW" << endl;
+		}
+		cout << endl;
+	}
+
+	//Ausgabe aller Baupläne nach Reihenfolge mithilfe von Lambda
+	void printAll() {
+		printBuildingInfo();
+
+		cout << "---------------------------------------------------------------------------------------" << endl;
+		cout << "BLAUPAUSEN" << endl;
+		cout << "---------------------------------------------------------------------------------------" << endl;
+
+		//Lambda zum Sortieren des Vektors in absteigender Reihenfolge
+		auto sortRuleLambda = [](Blueprint& b1, Blueprint& b2) -> bool
+		{
+			return b1.calculateRatio() > b2.calculateRatio();
+		};
+		//Sortieren mithilfe von Lambda
+		sort(savedBlueprints.begin(), savedBlueprints.end(), sortRuleLambda);
+
+		for (auto b : savedBlueprints) {
+			printBlueprint(&b);
+		}
+	}
+
+	//Speichern des aktuellen Plans und Erstellen eines Neuen
+	void createPlan() {
+		cout << "Aktueller Bauplan wird abgespeichert..." << endl;
+
+		//Suche nach gleichen Plänen
+		for (auto b : savedBlueprints) {
+			//Vergleich durch Funktor
+			if ((*currentBlueprint)(b)) {
+				cout << "INFO: Ein Bauplan mit diesen Eigenschaften existiert bereits (Bauplan wurde verworfen)" << endl;
+				cout << "---------------------------------------------------------------------------------------" << endl;
+				prepareSpace();
+				return;
+			}
+		}
+		savedBlueprints.push_back(*currentBlueprint);
+		cout << "Bauplan wurde erfolgreich gespeichert!" << endl;
+		cout << "---------------------------------------------------------------------------------------" << endl;
+		prepareSpace();
 	}
 
 	//Begruessung und Aufruf zur Bauplan-Erstellung
 	void startUp() {
-		cout << "--------------------------------------------------------------" << endl;
+		cout << "---------------------------------------------------------------------------------------" << endl;
 		cout << "CapyCity" << endl;
-		cout << "--------------------------------------------------------------" << endl;
+		cout << "---------------------------------------------------------------------------------------" << endl;
 		cout << "Bitte erstellen Sie zunaechst Ihren Baubereich." << endl;
 		prepareSpace();
 
 	}
 
-	//Hauptmenue mit Aufruf der einzelnen Methoden
+	//Hauptmenü mit Aufruf der einzelnen Methoden
 	void mainMenu() {
 		int input = 0;
-
-		cout << "--------------------------------------------------------------" << endl;
+		//Hauptmenü, Auswahl durch Nummer der Option
+		cout << "---------------------------------------------------------------------------------------" << endl;
 		cout << "Sie befinden sich im Hauptmenue. Welche Aktion moechten Sie ausfuehren?" << endl;
-		cout << "[1] Gebaeude setzen" << endl;
-		cout << "[2] Bereich loeschen" << endl;
-		cout << "[3] Bauplan anzeigen" << endl;
-		cout << "[4] Programm beenden" << endl;
-		cout << "--------------------------------------------------------------" << endl;
+		cout << "[0] Gebaeude setzen" << endl;
+		cout << "[1] Bereich loeschen" << endl;
+		cout << "[2] Aktuellen Bauplan anzeigen" << endl;
+		cout << "[3] Gespeicherte Bauplaene anzeigen" << endl;
+		cout << "[4] Neuen Bauplan erstellen" << endl;
+		cout << "[5] Programm beenden" << endl;
+		cout << "---------------------------------------------------------------------------------------" << endl;
 
 		cin >> input;
 
 		//Auswahl der Funktionalitaet
 		switch (input) {
-		case 1:
+		case 0:
 			setBuilding();
 			break;
-		case 2:
+		case 1:
 			delBuilding();
 			break;
+		case 2:
+			printBuildingInfo();
+			cout << "BLAUPAUSEN" << endl;
+			cout << "---------------------------------------------------------------------------------------" << endl;
+			printBlueprint(currentBlueprint);
+			break;
 		case 3:
-			printBlueprint();
+			printAll();
 			break;
 		case 4:
+			createPlan();
+			break;
+		case 5:
 			run = false;
 			break;
 		default:

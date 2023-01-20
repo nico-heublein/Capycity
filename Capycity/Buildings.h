@@ -12,6 +12,7 @@ protected:
 	string name;
 	string label;
 	int price;
+	int power;
 
 	//Ich habe mich entschlossen Carlas Idee umzusetzen, da ich die Map in der Building-Klasse persönlich übersichtlicher und leichter zu verstehen finde.
 	//Die Auslagerung der Materialien in eine gekapselte Klasse finde ich eher unübersichtlich und unpraktisch.
@@ -22,6 +23,8 @@ public:
 	string getName();
 	string getLabel();
 	int getDefaultPrice();
+	int getTotalPrice(int);
+	int getPower();
 	map<Material*, int> getMaterials();
 };
 
