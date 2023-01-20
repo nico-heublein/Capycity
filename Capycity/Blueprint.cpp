@@ -54,8 +54,14 @@
 
 		for (int i = 0; i < columns; i++) {
 			for (int j = 0; j < rows; j++) {
-				if (this->getContent()[i][j]->getLabel() != other.getContent()[i][j]->getLabel())
+				if ((this->getContent()[i][j] == nullptr) && (other.getContent()[i][j] != nullptr))
 					return false;
+				if ((this->getContent()[i][j] != nullptr) && (other.getContent()[i][j] == nullptr))
+					return false;
+				if ((this->getContent()[i][j] != nullptr) && (other.getContent()[i][j] != nullptr)) {
+					if (this->getContent()[i][j]->getLabel() != other.getContent()[i][j]->getLabel())
+						return false;
+				}
 			}
 		}
 
