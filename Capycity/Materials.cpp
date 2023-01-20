@@ -2,6 +2,7 @@
 
 using namespace std;
 
+//Destruktor
 Material::~Material() {
 	name.clear();
 }
@@ -19,6 +20,7 @@ Plastic::Plastic() {
 	price = 10;
 }
 
+//Getter
 string Material::getName() {
 	return name;
 }

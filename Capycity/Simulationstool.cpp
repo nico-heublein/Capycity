@@ -125,7 +125,7 @@ public:
 		cout << "Gebaeude wurde erfolgreich platziert!" << endl;
 	}
 
-	//Loeschen eines Gebaeudes (Koordinaten starten bei 0)
+	//Loeschen eines Bereichs (Koordinaten starten bei 0)
 	void delBuilding() {
 		int length;
 		int width;
@@ -157,7 +157,7 @@ public:
 				currentBlueprint->getContent()[j][i] = nullptr;
 			}
 		}
-		cout << "Gebaeude wurde erfolgreich geloescht!" << endl;
+		cout << "Bereich wurde erfolgreich geloescht!" << endl;
 	}
 
 	//Ausgabe der Gebäude-Infos (Hilfsmethode für das Drucken der Pläne)

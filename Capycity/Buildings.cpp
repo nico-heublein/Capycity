@@ -4,6 +4,7 @@
 
 using namespace std;
 
+//Destruktor
 Building::~Building() {
 	name.clear();
 	label.clear();
@@ -49,6 +50,8 @@ int Building::getTotalPrice(int size) {
 	return result;
 }
 
+
+//Getter
 int Building::getPower() {
 	return power;
 }

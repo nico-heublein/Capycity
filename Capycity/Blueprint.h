@@ -15,6 +15,8 @@ protected:
 	double ratio;
 
 public:
+	//Konstruktor
+	Blueprint(int r, int c);
 //Methoden
 	//Berechnung der wichtigen Werte
 	int calculatePrice();
@@ -24,8 +26,6 @@ public:
 	bool operator() (Blueprint other);
 	//Map mit allen Gebaeuden und der Größe dieser
 	map<Building*, int> getBuildings();
-//Konstruktor
-	Blueprint(int r, int c);
 //Getter
 	Building*** getContent();
 	int getRows();
