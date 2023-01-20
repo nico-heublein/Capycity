@@ -50,7 +50,7 @@ public:
 
 		for (int i = yCoord; i < yCoord + width; i++) {
 			for (int j = xCoord; j < xCoord + length; j++) {
-				if (currentBlueprint->getContent()[i][j].getName().compare("Empty") != 0)
+				if (currentBlueprint->getContent()[i][j] != nullptr)
 					valid = false;
 			}
 		}
@@ -76,7 +76,7 @@ public:
 		int xCoord;
 		int yCoord;
 		int buildingInput;
-		Building buildingType;
+		Building* building;
 
 		cout << "Bitte geben Sie die Laenge des Gebaeudes an." << endl;
 		cin >> length;
@@ -103,13 +103,13 @@ public:
 		//Auswahl der Art
 		switch (buildingInput) {
 		case 0:
-			buildingType = SolarGenerator();
+			building = new SolarGenerator();
 			break;
 		case 1:
-			buildingType = AquaGenerator();
+			building = new AquaGenerator();
 			break;
 		case 2:
-			buildingType = WindGenerator();
+			building = new WindGenerator();
 			break;
 		default:
 			return;
@@ -119,7 +119,7 @@ public:
 		//Platzieren des Gebaeudes
 		for (int i = xCoord; i < xCoord + length; i++) {
 			for (int j = yCoord; j < yCoord + width; j++) {
-				currentBlueprint->getContent()[j][i] = buildingType;
+				currentBlueprint->getContent()[j][i] = building;
 			}
 		}
 		cout << "Gebaeude wurde erfolgreich platziert!" << endl;
@@ -150,8 +150,11 @@ public:
 		//Loeschen der entsprechenden Felder
 		for (int i = xCoord; i < xCoord + length; i++) {
 			for (int j = yCoord; j < yCoord + width; j++) {
-				currentBlueprint->getContent()[j][i].~Building();
-				currentBlueprint->getContent()[j][i] = Empty();
+				//Löschen des Gebäude-Objekts, falls letzter Verweis gelöscht wird
+				if (currentBlueprint->getBuildings()[currentBlueprint->getContent()[j][i]] == 1)
+					delete currentBlueprint->getContent()[j][i];
+				//Reset des Pointers
+				currentBlueprint->getContent()[j][i] = nullptr;
 			}
 		}
 		cout << "Gebaeude wurde erfolgreich geloescht!" << endl;
@@ -164,7 +167,7 @@ public:
 		cout << "---------------------------------------------------------------------------------------" << endl;
 		vector<Building> buildingTypes = { SolarGenerator(), AquaGenerator(), WindGenerator() };
 
-		//Ausgabe von Label, Name, Preis jedes Gebaeudes
+		//Ausgabe von Label, Name, Preis jedes Gebaeudetyps (pro Feld)
 		for (auto b : buildingTypes) {
 			cout << "[" << b.getLabel() << "] " << b.getName() << endl;
 			cout << "Materialien:" << endl;
@@ -172,9 +175,9 @@ public:
 			for (auto m : b.getMaterials()) {
 				cout << m.second << "x " << m.first->getName() << endl;
 			}
-
-			cout << "Preis:			" << b.getTotalPrice() << "$" << endl;
-			cout << "Leistung:		" << b.getPower() << "MW" << endl;
+			cout << "Grundpreis:	" << b.getTotalPrice(0) << "$" << endl;
+			cout << "Gesamtpreis:	" << b.getTotalPrice(1) << "$" << endl;
+			cout << "Leistung:	" << b.getPower() << "MW" << endl;
 
 			cout << endl;
 		}
@@ -193,14 +196,34 @@ public:
 		//Ausgabe der Gebäude-Labels
 		for (int i = 0; i < plan->getColumns(); i++) {
 			for (int j = 0; j < plan->getRows(); j++) {
-				cout << plan->getContent()[i][j].getLabel() << " ";
+				if (plan->getContent()[i][j] != nullptr) {
+					cout << plan->getContent()[i][j]->getLabel() << " ";
+				} else {
+					cout << "X ";
+				}
+				
 			}
 			cout << "\n";
 		}
-		cout << endl;
+		//Ausgabe aller Gebäude
+		printBuildings(plan);
 		//Ausgabe des Gesamtpreis
 		cout << "Gesamtpreis:		" << plan->calculatePrice() << "$" << endl;
 		cout << "Energieproduktion:	" << plan->calculatePower() << "MW" << endl;
+	}
+
+	//Ausgabe aller Gebäude eines Planes
+	void printBuildings(Blueprint* plan) {
+		cout << endl;
+		cout << "Gebaeude:" << endl;
+
+		for (auto b : plan->getBuildings()) {
+			cout << "[" << b.first->getLabel() << "] " << b.first->getName() << ":	Matererialien[ ";
+			for (auto m : b.first->getMaterials())
+				cout << b.second * m.second << "x" << m.first->getName() << " ";
+			cout << "]	Preis: " << b.first->getTotalPrice(b.second) << "$" << "	Leistung: " << b.first->getPower() << "MW" << endl;
+		}
+		cout << endl;
 	}
 
 	//Ausgabe aller Baupläne nach Reihenfolge mithilfe von Lambda
@@ -219,8 +242,9 @@ public:
 		//Sortieren mithilfe von Lambda
 		sort(savedBlueprints.begin(), savedBlueprints.end(), sortRuleLambda);
 
-		for (auto b : savedBlueprints)
+		for (auto b : savedBlueprints) {
 			printBlueprint(&b);
+		}
 	}
 
 	//Speichern des aktuellen Plans und Erstellen eines Neuen

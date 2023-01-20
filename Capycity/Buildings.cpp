@@ -35,26 +35,16 @@ WindGenerator::WindGenerator() {
 	materials = { {new Plastic, 1}, {new Metal, 1}, {new Wood, 1} };
 }
 
-Empty::Empty() {
-	name = "Empty";
-	label = "X";
-	price = 0;
-	power = 0;
-
-	materials = {};
-	
-}
-
 int Building::getDefaultPrice() {
 	return price;
 }
 
 //Berechne Gesamtpreis (Grundpreis + Materialpreis)
-int Building::getTotalPrice() {
+int Building::getTotalPrice(int size) {
 	int result = this->getDefaultPrice();
 
 	for (auto m : this->getMaterials()) {
-		result += m.second * (m.first->getPrice());
+		result += m.second * (size * m.first->getPrice());
 	}
 	return result;
 }

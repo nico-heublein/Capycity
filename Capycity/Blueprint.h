@@ -5,20 +5,29 @@ using namespace std;
 
 class Blueprint {
 protected:
-	Building** content;
+//Attribute
+	//Matrix der einzelnen Felder
+	Building*** content;
+	//Zeilen und Spalten
 	int rows;
 	int columns;
+	//Kennzahl
 	double ratio;
 
 public:
+//Methoden
+	//Berechnung der wichtigen Werte
 	int calculatePrice();
 	int calculatePower();
 	double calculateRatio();
+	//Vergleich mit anderen Plänen
 	bool operator() (Blueprint other);
-
+	//Map mit allen Gebaeuden und der Größe dieser
+	map<Building*, int> getBuildings();
+//Konstruktor
 	Blueprint(int r, int c);
-
-	Building** getContent();
+//Getter
+	Building*** getContent();
 	int getRows();
 	int getColumns();
 	double getRatio();

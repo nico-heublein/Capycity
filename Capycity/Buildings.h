@@ -23,7 +23,7 @@ public:
 	string getName();
 	string getLabel();
 	int getDefaultPrice();
-	int getTotalPrice();
+	int getTotalPrice(int);
 	int getPower();
 	map<Material*, int> getMaterials();
 };

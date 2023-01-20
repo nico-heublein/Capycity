@@ -6,9 +6,12 @@
 		columns = c;
 		ratio = 0;
 
-		content = new Building * [columns];
+		content = new Building** [columns];
 		for (int i = 0; i < columns; i++) {
-			content[i] = new Empty[rows];
+			content[i] = new Building*[rows];
+			for (int j = 0; j < rows; j++) {
+				content[i][j] = nullptr;
+			}
 		}
 	}
 
@@ -16,10 +19,8 @@
 	int Blueprint::calculatePrice() {
 		int result = 0;
 
-		for (int i = 0; i < columns; i++) {
-			for (int j = 0; j < rows; j++) {
-				result += content[i][j].getTotalPrice();
-			}
+		for (auto building : getBuildings()) {
+			result += building.first->getTotalPrice(building.second);
 		}
 		return result;
 	}
@@ -27,10 +28,8 @@
 	int Blueprint::calculatePower() {
 		int result = 0;
 
-		for (int i = 0; i < columns; i++) {
-			for (int j = 0; j < rows; j++) {
-				result += content[i][j].getPower();
-			}
+		for (auto building : getBuildings()) {
+			result += building.first->getPower();
 		}
 		return result;
 	}
@@ -55,7 +54,7 @@
 
 		for (int i = 0; i < columns; i++) {
 			for (int j = 0; j < rows; j++) {
-				if (this->getContent()[i][j].getLabel() != other.getContent()[i][j].getLabel())
+				if (this->getContent()[i][j]->getLabel() != other.getContent()[i][j]->getLabel())
 					return false;
 			}
 		}
@@ -63,8 +62,25 @@
 		return true;
 	}
 
+	//Gibt Liste aller Gebäude-Objekte in der Matrix und deren Größe zurück
+	map<Building*, int> Blueprint::getBuildings() {
+		map<Building*, int> buildings = {};
+		for (int i = 0; i < columns; i++) {
+			for (int j = 0; j < rows; j++) {
+				if (content[i][j] != nullptr) {
+					if (buildings.count(content[i][j]) > 0) {
+						buildings[content[i][j]]++;
+					} else {
+						buildings.insert({content[i][j],1 });
+					}
+				}	
+			}
+		}
+		return buildings;
+	}
+
 	//Getter
-	Building** Blueprint::getContent() {
+	Building*** Blueprint::getContent() {
 		return content;
 	}
 	int Blueprint::getRows() {
